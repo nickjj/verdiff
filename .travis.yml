@@ -24,11 +24,11 @@ script:
   - '[ ! -d phoenix ]'
   - '[ ! -f Dockerfile* ]'
   - '[ -z "$(docker container ls -qa)" ]'
-  - 'docker image ls -q'
+  - 'docker image ls'
   - '[ -z "$(docker image ls -q)" ]'
   - "DEBUG=1 ./verdiff 1.4.4 1.4.8 --save --keep-image --keep-dockerfile"
   - '[ -d phoenix ]'
   - '[ -f Dockerfile* ]'
   - '[ -z "$(docker container ls -qa)" ]'
-  - 'docker image ls -q'
+  - 'docker image ls'
   - '[ -n "$(docker image ls -q)" ]'
