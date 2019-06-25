@@ -23,12 +23,10 @@ script:
   - "DEBUG=1 ./verdiff --framework laravel 5.6.33 5.8.17"
   - '[ ! -d phoenix ]'
   - '[ ! -f Dockerfile* ]'
-  - '[ -z "$(docker container ls -qa)" ]'
-  - 'docker image ls'
-  - '[ -z "$(docker image ls -q)" ]'
+  - 'DOCKER_IMAGE_COUNT_BEFORE_SAVE="$(docker image ls -q | wc -l)"'
   - "DEBUG=1 ./verdiff 1.4.4 1.4.8 --save --keep-image --keep-dockerfile"
+  - 'DOCKER_IMAGE_COUNT_AFTER_SAVE="$(docker image ls -q | wc -l)"'
   - '[ -d phoenix ]'
   - '[ -f Dockerfile* ]'
   - '[ -z "$(docker container ls -qa)" ]'
-  - 'docker image ls'
-  - '[ -n "$(docker image ls -q)" ]'
+  - '[ "${DOCKER_IMAGE_COUNT_AFTER_SAVE}" -gt "${DOCKER_IMAGE_COUNT_BEFORE_SAVE}" ]'
