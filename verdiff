@@ -1,0 +1,227 @@
+#!/usr/bin/env python
+
+import argparse
+import os
+import subprocess
+import textwrap
+import time
+
+
+FRAMEWORKS = ['phoenix', 'rails', 'django', 'laravel']
+
+# Certain web frameworks require running different commands. If you see
+# /bin/true being used below, that is performing a very minimal amount of work
+# or effectively nothing for a specific step.
+#
+# For example, with phoenix we don't need to install any system dependencies,
+# but Laravel requires git. Instead of making every framework suffer with
+# longer diff times we only install dependencies when we have to.
+FRAMEWORK_INFO = {
+    'phoenix': {
+        'base_image': 'elixir:1.8.1-slim',
+        'pre_run_instructions': '',
+        'system_dependencies': '/bin/true',
+        'install_package_manager': 'mix local.hex --force && mix local.rebar --force',
+        'install_framework': 'mix archive.install --force hex phx_new ',
+        'generate_project': 'mix phx.new',
+    },
+    'rails': {
+        'base_image': 'ruby:2.6.3-slim-stretch',
+        'pre_run_instructions': '',
+        'system_dependencies': 'apt-get update && apt-get install -y build-essential libpq-dev',
+        'install_package_manager': '/bin/true',
+        'install_framework': 'gem install rails -v ',
+        'generate_project': 'rails new --database=postgresql --skip-bundle=true',
+    },
+    'django': {
+        'base_image': 'python:3.7.3-slim-stretch',
+        'pre_run_instructions': '',
+        'system_dependencies': '/bin/true',
+        'install_package_manager': '/bin/true',
+        'install_framework': 'pip install Django==',
+        'generate_project': 'django-admin.py startproject',
+    },
+    'laravel': {
+        'base_image': 'php:7.3.6-fpm-stretch',
+        'pre_run_instructions': 'COPY --from=composer:1.8.6 /usr/bin/composer /usr/bin/composer',
+        'system_dependencies': 'apt-get update && apt-get install -y git',
+        'install_package_manager': '/bin/true',
+        'install_framework': 'echo ',
+        'generate_project': 'composer create-project --prefer-dist laravel/laravel=%version',
+    },
+}
+
+# Some web frameworks require that project names start with a letter and if no
+# project name is defined this is used by default, so it starts with "a".
+PROJECT_NAME_SUFFIX = 'a{0}'.format(int(time.time()))
+
+
+def dockerfile_filename(project_name):
+    # It's important not to just use "Dockerfile" as the name because this
+    # project temporarily generates a Dockerfile in the current directory of
+    # where you run it and we wouldn't want to clobber an existing Dockerfile.
+    #
+    # With the strategy we're using, we'll end up with a Dockerfile named
+    # Dockerfile.hello.a1561466599 which avoids any reasonable chance of
+    # clobbering an existing Dockerfile. This file also gets removed after
+    # we finish everything too.
+    return 'Dockerfile.{0}.{1}'.format(project_name, PROJECT_NAME_SUFFIX)
+
+
+def generate_dockerfile(framework_name, version_a, version_b, project_name):
+    framework = FRAMEWORK_INFO[framework_name]
+
+    dockerfile = '''FROM {base_name}
+
+WORKDIR /app/{framework_name}
+
+{pre_run_instructions}
+
+RUN {system_dependencies} \\
+  && {install_package_manager} \\
+  && rm -rf /var/lib/apt/lists/* \\
+  && rm -rf /usr/share/doc && rm -rf /usr/share/man \\
+  && {install_framework}{version_a} \\
+  && mkdir -p {version_a} && cd {version_a} \\
+  && {generate_project_a} {project_name} \\
+  && cd /app/{framework_name} \\
+  && {install_framework}{version_b} \\
+  && mkdir -p {version_b} && cd {version_b} \\
+  && {generate_project_b} {project_name}
+
+CMD ["diff", "--color", "-u", "--exclude", "vendor", "-r", "/app/{framework_name}/{version_a}/{project_name}", "/app/{framework_name}/{version_b}/{project_name}"]
+'''.format(base_name=framework['base_image'],
+           framework_name=framework_name,
+           pre_run_instructions=framework['pre_run_instructions'],
+           system_dependencies=framework['system_dependencies'],
+           install_package_manager=framework['install_package_manager'],
+           install_framework=framework['install_framework'],
+           version_a=version_a,
+           generate_project_a=framework['generate_project'].replace('%version',
+                                                                    version_a),
+           project_name=project_name,
+           version_b=version_b,
+           generate_project_b=framework['generate_project'].replace('%version',
+                                                                    version_b))
+
+    with open(dockerfile_filename(project_name), 'w') as writer:
+        writer.writelines(dockerfile)
+
+    if os.environ.get('DEBUG'):
+        print('\n[Debug] Dockerfile contents:')
+        print(dockerfile)
+
+    return None
+
+
+def docker_build(project_name):
+    cmd = 'docker image build -f {0} -t {1}-{2} .'.format(
+        dockerfile_filename(project_name), project_name, PROJECT_NAME_SUFFIX)
+
+    if os.environ.get('DEBUG'):
+        print('[Debug] docker_build command:')
+        print(cmd)
+
+    subprocess.call(cmd, shell=True)
+
+    return None
+
+
+def docker_run(project_name, framework, save):
+    docker_image_tag = '{0}-{1}'.format(project_name, PROJECT_NAME_SUFFIX)
+    cmd = 'docker container run -it --name {0} {1}'.format(project_name,
+                                                           docker_image_tag)
+
+    if os.environ.get('DEBUG'):
+        print('\n[Debug] docker_run command:')
+        print(cmd)
+
+    subprocess.call(cmd, shell=True)
+
+    if save:
+        cmd_cp = 'docker container cp {0}:/app/{1} .'.format(project_name,
+                                                             framework)
+        subprocess.call(cmd_cp, shell=True)
+
+    return None
+
+
+def docker_remove(project_name, keep_image, keep_dockerfile):
+    cmd = 'docker image rm -f {0}-{1}'.format(project_name,
+                                              PROJECT_NAME_SUFFIX)
+    cmd_rm_container = 'docker container rm -f {0}'.format(project_name)
+    dockerfile = dockerfile_filename(project_name)
+
+    if os.environ.get('DEBUG') and not keep_image:
+        print('\n[Debug] docker_remove commands:')
+        print(cmd)
+        print(cmd_rm_container)
+
+    if os.path.exists(dockerfile) and not keep_dockerfile:
+        os.remove(dockerfile)
+
+    subprocess.call(cmd_rm_container, shell=True)
+
+    if not keep_image:
+        subprocess.call(cmd, shell=True)
+
+    return None
+
+
+def supported_framework(str):
+    str = str.strip()
+
+    if str in FRAMEWORKS:
+        return str
+    else:
+        msg = 'not a supported framework: "{0}"'.format(str)
+        raise argparse.ArgumentTypeError(msg)
+
+
+parser = argparse.ArgumentParser(
+    formatter_class=argparse.RawDescriptionHelpFormatter,
+    description=textwrap.dedent('''\
+    diff every change between 2 web framework versions
+
+    supported web frameworks:
+
+      {0}
+
+    usage example:
+
+      verdiff --framework phoenix 1.4.4 1.4.8
+    ''').format(', '.join(FRAMEWORKS)))
+
+parser.add_argument('versions', default=None,
+                    metavar='versions', type=str, nargs=2,
+                    help='both versions that you want to compare')
+
+parser.add_argument('--framework', default='phoenix', type=supported_framework,
+                    metavar='NAME',
+                    help='generate projects using this framework')
+
+parser.add_argument('--project', default=PROJECT_NAME_SUFFIX, type=str,
+                    metavar='NAME', help='supply an optional project name')
+
+parser.add_argument('--save', default=False, type=bool, nargs='?',
+                    const=True, metavar='BOOL',
+                    help='persist generated projects to your dev box')
+
+parser.add_argument('--keep-image', default=False, type=bool, nargs='?',
+                    const=True, metavar='BOOL',
+                    help='do not remove the Docker image at the end')
+
+parser.add_argument('--keep-dockerfile', default=False, type=bool, nargs='?',
+                    const=True, metavar='BOOL',
+                    help='do not remove the Dockerfile at the end')
+
+args = parser.parse_args()
+
+versions = args.versions
+generate_dockerfile(args.framework, versions[0], versions[1], args.project)
+
+docker_build(args.project)
+
+docker_run(args.project, args.framework, args.save)
+
+docker_remove(args.project, args.keep_image, args.keep_dockerfile)
