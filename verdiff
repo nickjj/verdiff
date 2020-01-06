@@ -18,7 +18,7 @@ FRAMEWORKS = ['phoenix', 'rails', 'django', 'laravel']
 # longer diff times we only install dependencies when we have to.
 FRAMEWORK_INFO = {
     'phoenix': {
-        'base_image': 'elixir:1.8.1-slim',
+        'base_image': 'elixir:1.9-slim',
         'pre_run_instructions': '',
         'system_dependencies': '/bin/true',
         'install_package_manager': 'mix local.hex --force && mix local.rebar --force',
@@ -26,7 +26,7 @@ FRAMEWORK_INFO = {
         'generate_project': 'mix phx.new',
     },
     'rails': {
-        'base_image': 'ruby:2.6.3-slim-stretch',
+        'base_image': 'ruby:2.7-slim-buster',
         'pre_run_instructions': '',
         'system_dependencies': 'apt-get update && apt-get install -y build-essential libpq-dev',
         'install_package_manager': '/bin/true',
@@ -34,7 +34,7 @@ FRAMEWORK_INFO = {
         'generate_project': 'rails new --database=postgresql --skip-bundle=true --skip-git=true',
     },
     'django': {
-        'base_image': 'python:3.7.3-slim-stretch',
+        'base_image': 'python:3.8-slim-buster',
         'pre_run_instructions': '',
         'system_dependencies': '/bin/true',
         'install_package_manager': '/bin/true',
@@ -42,7 +42,7 @@ FRAMEWORK_INFO = {
         'generate_project': 'django-admin.py startproject',
     },
     'laravel': {
-        'base_image': 'php:7.3.6-fpm-stretch',
+        'base_image': 'php:7.4-fpm-buster',
         'pre_run_instructions': 'COPY --from=composer:1.8.6 /usr/bin/composer /usr/bin/composer',
         'system_dependencies': 'apt-get update && apt-get install -y git',
         'install_package_manager': '/bin/true',
