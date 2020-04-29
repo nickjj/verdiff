@@ -1,4 +1,5 @@
-# Verdiff [![Build Status](https://secure.travis-ci.org/nickjj/verdiff.png)](http://travis-ci.org/nickjj/verdiff)
+# Verdiff [![Build Status](https://travis-ci.org/nickjj/verdiff.svg?branch=master)](http://travis-ci.org/nickjj/verdiff)
+
 A command line script that will show you exactly what changed between 2
 versions of your favorite web framework.
 
@@ -7,7 +8,7 @@ It currently supports Phoenix, Rails, Django and Laravel.
 *Verdiff is a zero dependency Python 2.x and 3.x compatible script that only
 requires having Docker installed.*
 
-## Sample Output 
+## Sample Output
 
 Running this command:
 
@@ -192,7 +193,7 @@ verdiff --framework rails 5.1.2 5.2.3
 verdiff 1.4.4 1.4.8 --project hello --save
 
 # 1. Compare version 2.1.9 and 2.2.2 of a new Django project
-# 2. Set DEBUG=1 to see the Dockerfile that got used and all Docker commands that were run 
+# 2. Set DEBUG=1 to see the Dockerfile that got used and all Docker commands that were run
 DEBUG=1 verdiff --framework django 2.1.9 2.2.2 --save
 
 # 1. Compare version 5.6.33 and 5.8.17 of a new Laravel project
