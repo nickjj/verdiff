@@ -1,0 +1,113 @@
+#!/usr/bin/env bash
+
+set -o errexit
+set -o pipefail
+
+lint:shell() {
+  # Lint shell scripts
+  local cmd=(shellcheck)
+
+  if ! command -v shellcheck >/dev/null 2>&1; then
+    local cmd=(docker container run --rm -i -v "${PWD}:/mnt" koalaman/shellcheck:stable)
+  fi
+
+  find . -type f \
+    ! -path "./.git/*" \
+    ! -path "./.ruff_cache/*" \
+    ! -path "./.pytest_cache/*" \
+    -exec grep --quiet '^#!.*sh' {} \; -exec "${cmd[@]}" {} +
+}
+
+lint() {
+  # Lint Python code
+  ruff check "${@}"
+}
+
+format:shell() {
+  # Format shell scripts
+  local cmd=(shfmt)
+
+  if ! command -v shfmt >/dev/null 2>&1; then
+    local cmd=(docker container run --rm -i -v "${PWD}:/mnt" -u "$(id -u):$(id -g)" -w /mnt mvdan/shfmt:v3)
+  fi
+
+  local maybe_write=("--write")
+
+  for arg in "${@}"; do
+    if [ "${arg}" == "-d" ] || [ "${arg}" == "--diff" ]; then
+      unset "maybe_write[0]"
+    fi
+  done
+
+  "${cmd[@]}" "${maybe_write[@]}" "${@}" .
+}
+
+format() {
+  # Format Python code
+  ruff check --fix
+  ruff format "${@}"
+}
+
+quality() {
+  # Perform all code quality commands together
+  lint:shell
+  lint
+
+  format:shell
+  format
+}
+
+function ci:install-deps {
+  pip3 install ruff
+}
+
+function ci:test {
+  lint:shell
+  format:shell --diff
+
+  lint "${@}"
+  format --check --diff
+
+  export DEBUG=1
+
+  ./verdiff --framework phoenix 1.7.0 1.7.21
+  ./verdiff --framework rails 8.0.0 8.0.2 --project customname
+  ./verdiff --framework django 5.1.8 5.2
+
+  echo "Confirm phoenix/ doesn't exist..."
+  [ ! -d phoenix ]
+
+  echo "Confirm Dockerfile doesn't exist..."
+  compgen -G "Dockerfile*" >/dev/null && exit 1
+
+  local docker_image_count_before=
+  local docker_image_count_after=
+
+  docker_image_count_before="$(docker image ls -q | wc -l)"
+  ./verdiff --framework phoenix 1.7.0 1.7.21 --save --keep-image --keep-dockerfile
+  docker_image_count_after="$(docker image ls -q | wc -l)"
+
+  echo "Confirm phoenix/ exists..."
+  [ -d phoenix ]
+
+  echo "Confirm Dockerfile exists..."
+  compgen -G "Dockerfile*" >/dev/null
+
+  echo "Confirm stopped containers are removed..."
+  [ -z "$(docker container ls -qa)" ]
+
+  echo "Confirm saved image was saved..."
+  [ "${docker_image_count_after}" -gt "${docker_image_count_before}" ]
+}
+
+function help {
+  printf "%s <task> [args]\n\nTasks:\n" "${0}"
+
+  compgen -A function | grep -v "^_" | cat -n
+
+  printf "\nExtended help:\n  Each task has comments for general usage\n"
+}
+
+# This idea is heavily inspired by: https://github.com/adriancooney/Taskfile
+TIMEFORMAT=$'\nTask completed in %3lR'
+time "${@:-help}"
