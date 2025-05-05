@@ -6,47 +6,51 @@ import subprocess
 import textwrap
 import time
 
-FRAMEWORKS = ["phoenix", "rails", "django", "laravel"]
+FRAMEWORKS = ["rails", "django", "laravel", "phoenix"]
 
 # Certain web frameworks require running different commands. If you see
 # /bin/true being used below, that is performing a very minimal amount of work
 # or effectively nothing for a specific step.
 #
-# For example, with phoenix we don't need to install any system dependencies,
+# For example, with Django we don't need to install any system dependencies,
 # but Laravel requires git. Instead of making every framework suffer with
 # longer diff times we only install dependencies when we have to.
 FRAMEWORK_INFO = {
-    "phoenix": {
-        "base_image": "elixir:1.13.1-slim",
-        "pre_run_instructions": "",
-        "system_dependencies": "/bin/true",
-        "install_package_manager": "mix local.hex --force && mix local.rebar --force",
-        "install_framework": "mix archive.install --force hex phx_new ",
-        "generate_project": "mix phx.new",
-    },
     "rails": {
-        "base_image": "ruby:3.0.3-slim-bullseye",
+        "base_image": "ruby:3.4-slim-bookworm",
         "pre_run_instructions": "",
-        "system_dependencies": "apt-get update && apt-get install -y build-essential libpq-dev",
+        "system_dependencies": "apt-get update && apt-get install -y make gcc libpq-dev",
         "install_package_manager": "/bin/true",
         "install_framework": "gem install rails -v ",
-        "generate_project": "rails new --database=postgresql --skip-bundle=true --skip-git=true",
+        "generate_project": "rails new --database=postgresql --skip-bundle=true --skip-git=true --javascript=esbuild --css=tailwind",
+        "generate_extras": "/bin/true",
     },
     "django": {
-        "base_image": "python:3.10.1-slim-bullseye",
+        "base_image": "python:3.13-slim-bookworm",
         "pre_run_instructions": "",
         "system_dependencies": "/bin/true",
         "install_package_manager": "/bin/true",
         "install_framework": "pip3 install Django==",
-        "generate_project": "django-admin.py startproject",
+        "generate_project": "django-admin startproject",
+        "generate_extras": "python3 manage.py startapp myapp",
     },
     "laravel": {
-        "base_image": "php:8.1.1-fpm-bullseye",
-        "pre_run_instructions": "COPY --from=composer:1.8.6 /usr/bin/composer /usr/bin/composer",
+        "base_image": "php:8.3-fpm-bookworm",
+        "pre_run_instructions": "COPY --from=composer:2.8 /usr/bin/composer /usr/bin/composer",
         "system_dependencies": "apt-get update && apt-get install -y git",
         "install_package_manager": "/bin/true",
         "install_framework": "echo ",
         "generate_project": "composer create-project --prefer-dist laravel/laravel=%version",
+        "generate_extras": "/bin/true",
+    },
+    "phoenix": {
+        "base_image": "elixir:1.18-slim",
+        "pre_run_instructions": "",
+        "system_dependencies": "apt-get update && apt-get install -y make ca-certificates",
+        "install_package_manager": "mix local.hex --force && mix local.rebar --force",
+        "install_framework": "mix archive.install --force hex phx_new ",
+        "generate_project": "mix phx.new",
+        "generate_extras": "/bin/true",
     },
 }
 
@@ -83,10 +87,12 @@ RUN {system_dependencies} \\
   && {install_framework}{version_a} \\
   && mkdir -p {version_a} && cd {version_a} \\
   && {generate_project_a} {project_name} \\
+  && cd {project_name} && {generate_extras_a} \\
   && cd /app/{framework_name} \\
   && {install_framework}{version_b} \\
   && mkdir -p {version_b} && cd {version_b} \\
-  && {generate_project_b} {project_name}
+  && {generate_project_b} {project_name} \\
+  && cd {project_name} && {generate_extras_b}
 
 CMD ["diff", "--color", "-u", "--exclude", "vendor", "-r", "/app/{framework_name}/{version_a}/{project_name}", "/app/{framework_name}/{version_b}/{project_name}"]
 """.format(
@@ -101,10 +107,12 @@ CMD ["diff", "--color", "-u", "--exclude", "vendor", "-r", "/app/{framework_name
             "%version", version_a
         ),
         project_name=project_name,
+        generate_extras_a=framework["generate_extras"],
         version_b=version_b,
         generate_project_b=framework["generate_project"].replace(
             "%version", version_b
         ),
+        generate_extras_b=framework["generate_extras"],
     )
 
     with open(dockerfile_filename(project_name), "w") as writer:
@@ -194,9 +202,11 @@ parser = argparse.ArgumentParser(
 
       {0}
 
-    usage example:
-
-      verdiff --framework phoenix 1.6.0 1.6.6
+    examples:
+      verdiff --framework rails 8.0.0 8.0.2
+      DEBUG=1 verdiff --framework django 5.1.8 5.2
+      verdiff --framework laravel 12.0.0 12.0.7 --project hello --save
+      verdiff --framework phoenix 1.7.0 1.7.21 --keep-image --keep-dockerfile
     """).format(", ".join(FRAMEWORKS)),
 )
 
@@ -211,7 +221,7 @@ parser.add_argument(
 
 parser.add_argument(
     "--framework",
-    default="phoenix",
+    default="rails",
     type=supported_framework,
     metavar="NAME",
     help="generate projects using this framework",
