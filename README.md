@@ -5,8 +5,8 @@ versions of your favorite web framework.
 
 It currently supports Phoenix, Rails, Django and Laravel.
 
-*Verdiff is a zero dependency Python 2.x and 3.x compatible script that only
-requires having Docker installed.*
+*Verdiff is a zero dependency 3.6+ compatible script that only requires having
+Docker installed.*
 
 ## Sample Output
 
@@ -94,7 +94,7 @@ diff --color -u --exclude vendor -r /app/phoenix/1.4.4/a1561480494/test/support/
 ## But Why?
 
 A lot of popular web frameworks allow you to generate a new project with a
-command line tool. For example with Phoenix you can run `mix phx.new hello` and 
+command line tool. For example with Phoenix you can run `mix phx.new hello` and
 with Rails you can run `rails new hello`.
 
 This is how most of us start a new project with those frameworks.

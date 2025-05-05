@@ -4,4 +4,4 @@
 
 *Released: June 25th 2019*
 
-- Initial release 
+- Initial release
