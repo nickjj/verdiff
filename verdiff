@@ -56,7 +56,7 @@ FRAMEWORK_INFO = {
 
 # Some web frameworks require that project names start with a letter and if no
 # project name is defined this is used by default, so it starts with "a".
-PROJECT_NAME_SUFFIX = "a{0}".format(int(time.time()))
+PROJECT_NAME_SUFFIX = f"a{int(time.time())}"
 
 
 def dockerfile_filename(project_name):
@@ -68,52 +68,41 @@ def dockerfile_filename(project_name):
     # Dockerfile.hello.a1561466599 which avoids any reasonable chance of
     # clobbering an existing Dockerfile. This file also gets removed after
     # we finish everything too.
-    return "Dockerfile.{0}.{1}".format(project_name, PROJECT_NAME_SUFFIX)
+    return f"Dockerfile.{project_name}.{PROJECT_NAME_SUFFIX}"
 
 
 def generate_dockerfile(framework_name, version_a, version_b, project_name):
     framework = FRAMEWORK_INFO[framework_name]
 
-    dockerfile = """FROM {base_name}
+    generate_project_a = framework["generate_project"].replace(
+        "%version", version_a
+    )
+    generate_project_b = framework["generate_project"].replace(
+        "%version", version_b
+    )
+
+    dockerfile = f"""FROM {framework["base_image"]}
 
 WORKDIR /app/{framework_name}
 
-{pre_run_instructions}
+{framework["pre_run_instructions"]}
 
-RUN {system_dependencies} \\
-  && {install_package_manager} \\
+RUN {framework["system_dependencies"]} \\
+  && {framework["install_package_manager"]} \\
   && rm -rf /var/lib/apt/lists/* \\
   && rm -rf /usr/share/doc && rm -rf /usr/share/man \\
-  && {install_framework}{version_a} \\
+  && {framework["install_framework"]}{version_a} \\
   && mkdir -p {version_a} && cd {version_a} \\
   && {generate_project_a} {project_name} \\
-  && cd {project_name} && {generate_extras_a} \\
+  && cd {project_name} && {framework["generate_extras"]} \\
   && cd /app/{framework_name} \\
-  && {install_framework}{version_b} \\
+  && {framework["install_framework"]}{version_b} \\
   && mkdir -p {version_b} && cd {version_b} \\
   && {generate_project_b} {project_name} \\
-  && cd {project_name} && {generate_extras_b}
+  && cd {project_name} && {framework["generate_extras"]}
 
 CMD ["diff", "--color", "-u", "--exclude", "vendor", "-r", "/app/{framework_name}/{version_a}/{project_name}", "/app/{framework_name}/{version_b}/{project_name}"]
-""".format(
-        base_name=framework["base_image"],
-        framework_name=framework_name,
-        pre_run_instructions=framework["pre_run_instructions"],
-        system_dependencies=framework["system_dependencies"],
-        install_package_manager=framework["install_package_manager"],
-        install_framework=framework["install_framework"],
-        version_a=version_a,
-        generate_project_a=framework["generate_project"].replace(
-            "%version", version_a
-        ),
-        project_name=project_name,
-        generate_extras_a=framework["generate_extras"],
-        version_b=version_b,
-        generate_project_b=framework["generate_project"].replace(
-            "%version", version_b
-        ),
-        generate_extras_b=framework["generate_extras"],
-    )
+"""
 
     with open(dockerfile_filename(project_name), "w") as writer:
         writer.writelines(dockerfile)
@@ -126,9 +115,7 @@ CMD ["diff", "--color", "-u", "--exclude", "vendor", "-r", "/app/{framework_name
 
 
 def docker_build(project_name):
-    cmd = "docker image build -f {0} -t {1}-{2} .".format(
-        dockerfile_filename(project_name), project_name, PROJECT_NAME_SUFFIX
-    )
+    cmd = f"docker image build -f {dockerfile_filename(project_name)} -t {project_name}-{PROJECT_NAME_SUFFIX} ."
 
     if os.environ.get("DEBUG"):
         print("[Debug] docker_build command:")
@@ -140,11 +127,9 @@ def docker_build(project_name):
 
 
 def docker_run(project_name, framework, save):
-    docker_image_tag = "{0}-{1}".format(project_name, PROJECT_NAME_SUFFIX)
+    docker_image_tag = f"{project_name}-{PROJECT_NAME_SUFFIX}"
 
-    cmd = "docker container run -t --name {0} {1}".format(
-        project_name, docker_image_tag
-    )
+    cmd = f"docker container run -t --name {project_name} {docker_image_tag}"
 
     if os.environ.get("DEBUG"):
         print("\n[Debug] docker_run command:")
@@ -153,19 +138,15 @@ def docker_run(project_name, framework, save):
     subprocess.call(cmd, shell=True)
 
     if save:
-        cmd_cp = "docker container cp {0}:/app/{1} .".format(
-            project_name, framework
-        )
+        cmd_cp = f"docker container cp {project_name}:/app/{framework} ."
         subprocess.call(cmd_cp, shell=True)
 
     return None
 
 
 def docker_remove(project_name, keep_image, keep_dockerfile):
-    cmd = "docker image rm -f {0}-{1}".format(
-        project_name, PROJECT_NAME_SUFFIX
-    )
-    cmd_rm_container = "docker container rm -f {0}".format(project_name)
+    cmd = "docker image rm -f {project_name}-{PROJECT_NAME_SUFFIX}"
+    cmd_rm_container = f"docker container rm -f {project_name}"
     dockerfile = dockerfile_filename(project_name)
 
     if os.environ.get("DEBUG") and not keep_image:
@@ -190,18 +171,18 @@ def supported_framework(str):
     if str in FRAMEWORKS:
         return str
     else:
-        msg = 'not a supported framework: "{0}"'.format(str)
+        msg = f"not a supported framework: '{str}'"
         raise argparse.ArgumentTypeError(msg)
 
 
 parser = argparse.ArgumentParser(
     formatter_class=argparse.RawDescriptionHelpFormatter,
-    description=textwrap.dedent("""\
+    description=textwrap.dedent(f"""\
     diff every change between 2 web framework versions
 
     supported web frameworks:
 
-      {0}
+      {", ".join(FRAMEWORKS)}
 
     examples:
 
@@ -209,7 +190,7 @@ parser = argparse.ArgumentParser(
       DEBUG=1 verdiff --framework django 5.1.8 5.2
       verdiff --framework laravel 12.0.0 12.0.7 --project hello --save
       verdiff --framework phoenix 1.7.0 1.7.21 --keep-image --keep-dockerfile
-    """).format(", ".join(FRAMEWORKS)),
+    """),
 )
 
 parser.add_argument(
