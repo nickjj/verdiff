@@ -7,9 +7,17 @@ Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+- Nothing yet!
+
+## [0.2.3] - 2025-05-05
+
 ### Added
 
 - Short flags for arguments (ie. `-p | --project`)
+
+### Changed
+
+- Drop support for Python 2.7 by using f-strings
 
 ## [0.2.2] - 2025-05-05
 
@@ -37,7 +45,8 @@ Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Everything!
 
-[Unreleased]: https://github.com/nickjj/verdiff/compare/v0.2.2...HEAD
+[Unreleased]: https://github.com/nickjj/verdiff/compare/v0.2.3...HEAD
+[0.2.3]: https://github.com/nickjj/verdiff/compare/v0.2.2..v0.2.3
 [0.2.2]: https://github.com/nickjj/verdiff/compare/v0.2.1..v0.2.2
 [0.2.1]: https://github.com/nickjj/verdiff/compare/v0.2.0..v0.2.1
 [0.2.0]: https://github.com/nickjj/verdiff/compare/v0.1.0..v0.2.0
