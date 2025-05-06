@@ -7,7 +7,11 @@ Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-- Nothing yet
+### Changed
+
+- Switch Travis CI with GitHub Actions
+- Use ruff to lint and format Python script
+- Modernize base Docker images and examples
 
 ## [0.1.0] - 2019-06-25
 
