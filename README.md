@@ -148,7 +148,7 @@ somewhere on your system path.
 
 ```sh
 sudo curl \
-  -L https://raw.githubusercontent.com/nickjj/verdiff/v0.1.0/verdiff \
+  -L https://raw.githubusercontent.com/nickjj/verdiff/v0.2.0/verdiff \
   -o /usr/local/bin/verdiff && sudo chmod +x /usr/local/bin/verdiff
 ```
 
