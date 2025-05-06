@@ -204,6 +204,7 @@ parser = argparse.ArgumentParser(
       {0}
 
     examples:
+
       verdiff --framework rails 8.0.0 8.0.2
       DEBUG=1 verdiff --framework django 5.1.8 5.2
       verdiff --framework laravel 12.0.0 12.0.7 --project hello --save
@@ -213,14 +214,14 @@ parser = argparse.ArgumentParser(
 
 parser.add_argument(
     "versions",
-    default=None,
-    metavar="versions",
-    type=str,
     nargs=2,
+    default=None,
+    metavar="A B",
     help="both versions that you want to compare",
 )
 
 parser.add_argument(
+    "-f",
     "--framework",
     default="rails",
     type=supported_framework,
@@ -229,41 +230,35 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    "-p",
     "--project",
     default=PROJECT_NAME_SUFFIX,
-    type=str,
     metavar="NAME",
     help="supply an optional project name",
 )
 
 parser.add_argument(
+    "-s",
     "--save",
     default=False,
-    type=bool,
-    nargs="?",
-    const=True,
-    metavar="BOOL",
+    action="store_true",
     help="persist generated projects to your dev box",
 )
 
 parser.add_argument(
+    "-I",
     "--keep-image",
     default=False,
-    type=bool,
-    nargs="?",
-    const=True,
-    metavar="BOOL",
-    help="do not remove the Docker image at the end",
+    action="store_true",
+    help="don't remove the Docker image at the end",
 )
 
 parser.add_argument(
+    "-D",
     "--keep-dockerfile",
     default=False,
-    type=bool,
-    nargs="?",
-    const=True,
-    metavar="BOOL",
-    help="do not remove the Dockerfile at the end",
+    action="store_true",
+    help="don't remove the Dockerfile at the end",
 )
 
 args = parser.parse_args()
