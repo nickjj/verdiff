@@ -197,6 +197,13 @@ in your favorite code editor then you may want to use the `--save` flag so
 you can diff the projects on your own. They will always be saved in the current
 directory with a directory name of whatever `--framework` you passed in.
 
+## 🍀 Donations
+
+GitHub tips is available in the side bar of this repo.
+
+I'm not expecting anything. I'm doing this because I enjoy it but if this tool
+helps save you time, tips would be greatly appreciated!
+
 ## 👀 About the Author
 
 I'm a self taught developer and have been freelancing for the last ~20 years.
