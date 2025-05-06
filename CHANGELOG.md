@@ -13,7 +13,7 @@ Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
-- Only use `--tty` with Docker is a TTY is available
+- Only use `--tty` with Docker if a TTY is available
 
 ## [0.2.0] - 2025-05-05
 
