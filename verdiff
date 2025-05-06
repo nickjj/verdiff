@@ -3,6 +3,7 @@
 import argparse
 import os
 import subprocess
+import sys
 import textwrap
 import time
 
@@ -141,8 +142,15 @@ def docker_build(project_name):
 
 def docker_run(project_name, framework, save):
     docker_image_tag = "{0}-{1}".format(project_name, PROJECT_NAME_SUFFIX)
-    cmd = "docker container run -it --name {0} {1}".format(
-        project_name, docker_image_tag
+
+    has_tty = os.isatty(sys.stdout.fileno())
+    run_flags = "-i"
+
+    if has_tty:
+        run_flags = f"{run_flags}t"
+
+    cmd = "docker container run {0} --name {1} {2}".format(
+        run_flags, project_name, docker_image_tag
     )
 
     if os.environ.get("DEBUG"):
