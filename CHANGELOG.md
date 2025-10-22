@@ -7,8 +7,17 @@ Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-- Fix missing f-string to remove Docker images
+- Nothing yet!
+
+## [0.2.4] - 2025-10-22
+
+### Changed
+
 - Update all Docker images to use Debian Trixie
+
+### Fixed
+
+- Missing f-string to remove Docker images
 
 ## [0.2.3] - 2025-05-05
 
@@ -46,7 +55,8 @@ Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Everything!
 
-[Unreleased]: https://github.com/nickjj/verdiff/compare/v0.2.3...HEAD
+[Unreleased]: https://github.com/nickjj/verdiff/compare/v0.2.4...HEAD
+[0.2.4]: https://github.com/nickjj/verdiff/compare/v0.2.3..v0.2.4
 [0.2.3]: https://github.com/nickjj/verdiff/compare/v0.2.2..v0.2.3
 [0.2.2]: https://github.com/nickjj/verdiff/compare/v0.2.1..v0.2.2
 [0.2.1]: https://github.com/nickjj/verdiff/compare/v0.2.0..v0.2.1
