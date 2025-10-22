@@ -7,7 +7,7 @@ Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-- Nothing yet!
+- Fix missing f-string to remove Docker images
 
 ## [0.2.3] - 2025-05-05
 

@@ -145,7 +145,7 @@ def docker_run(project_name, framework, save):
 
 
 def docker_remove(project_name, keep_image, keep_dockerfile):
-    cmd = "docker image rm -f {project_name}-{PROJECT_NAME_SUFFIX}"
+    cmd = f"docker image rm -f {project_name}-{PROJECT_NAME_SUFFIX}"
     cmd_rm_container = f"docker container rm -f {project_name}"
     dockerfile = dockerfile_filename(project_name)
 
