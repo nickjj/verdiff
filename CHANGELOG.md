@@ -8,6 +8,7 @@ Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 - Fix missing f-string to remove Docker images
+- Update all Docker images to use Debian Trixie
 
 ## [0.2.3] - 2025-05-05
 

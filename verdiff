@@ -17,7 +17,7 @@ FRAMEWORKS = ["rails", "django", "laravel", "phoenix"]
 # longer diff times we only install dependencies when we have to.
 FRAMEWORK_INFO = {
     "rails": {
-        "base_image": "ruby:3.4-slim-bookworm",
+        "base_image": "ruby:3.4-slim-trixie",
         "pre_run_instructions": "",
         "system_dependencies": "apt-get update && apt-get install -y make gcc libpq-dev",
         "install_package_manager": "/bin/true",
@@ -26,7 +26,7 @@ FRAMEWORK_INFO = {
         "generate_extras": "/bin/true",
     },
     "django": {
-        "base_image": "python:3.13-slim-bookworm",
+        "base_image": "python:3.14-slim-trixie",
         "pre_run_instructions": "",
         "system_dependencies": "/bin/true",
         "install_package_manager": "/bin/true",
@@ -35,7 +35,7 @@ FRAMEWORK_INFO = {
         "generate_extras": "python3 manage.py startapp myapp",
     },
     "laravel": {
-        "base_image": "php:8.3-fpm-bookworm",
+        "base_image": "php:8.4-fpm-trixie",
         "pre_run_instructions": "COPY --from=composer:2.8 /usr/bin/composer /usr/bin/composer",
         "system_dependencies": "apt-get update && apt-get install -y git",
         "install_package_manager": "/bin/true",
@@ -44,7 +44,7 @@ FRAMEWORK_INFO = {
         "generate_extras": "/bin/true",
     },
     "phoenix": {
-        "base_image": "elixir:1.18-slim",
+        "base_image": "elixir:1.19-slim",
         "pre_run_instructions": "",
         "system_dependencies": "apt-get update && apt-get install -y make ca-certificates",
         "install_package_manager": "mix local.hex --force && mix local.rebar --force",
