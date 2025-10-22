@@ -182,7 +182,7 @@ DEBUG=1 verdiff --framework django 5.1.8 5.2
 # 3. Persist the projects to your dev box in a laravel/ folder in the current directory
 verdiff --framework laravel 12.0.0 12.0.7 --project hello --save
 
-# 1. Compare version of a Phoenix project
+# 1. Compare versions of a Phoenix project
 # 2. Keep the Docker image around after it completes in case you want to check it out
 # 3. Keep the Dockerfile around in the current directory in case you want to check it out
 verdiff --framework phoenix 1.7.0 1.7.21 --keep-image --keep-dockerfile
