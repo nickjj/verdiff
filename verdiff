@@ -19,7 +19,7 @@ FRAMEWORK_INFO = {
     "rails": {
         "base_image": "ruby:3.4-slim-trixie",
         "pre_run_instructions": "",
-        "system_dependencies": "apt-get update && apt-get install -y make gcc libpq-dev",
+        "system_dependencies": "apt-get update && apt-get install -y make gcc git libpq-dev",
         "install_package_manager": "/bin/true",
         "install_framework": "gem install rails -v ",
         "generate_project": "rails new --database=postgresql --skip-bundle=true --skip-git=true --javascript=esbuild --css=tailwind",
